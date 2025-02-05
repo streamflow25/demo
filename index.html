@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html>
+<head> 
+    <meta charset="utf-8">
+    <meta name="description"
+        content="StreamFlow: Streaming Flow Matching for Real-time Streaming Generation">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>StreamFlow</title> 
+
+    <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+    rel="stylesheet">
+
+    <link rel="stylesheet" href="./static/css/bulma.min.css">
+    <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+    <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+    <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+    <link rel="stylesheet" href="./static/css/index.css">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script defer src="./static/js/fontawesome.all.min.js"></script>
+    <script src="./static/js/bulma-carousel.min.js"></script>
+    <script src="./static/js/bulma-slider.min.js"></script>
+    </head>
+
+<body>
+<section class="hero">
+    <div class="hero-body" style="padding-bottom: 24px;">
+        <div class="container is-max-desktop">
+        <div class="columns is-centered">
+            <div class="column has-text-centered">
+            <h1 class="title is-1 publication-title">StreamFlow: Streaming Flow Matching for Real-time Streaming Generation</h1>
+            <div class="is-size-4 publication-authors"> 
+                <span class="author-block">Anonymous</span>
+            </div>  
+    
+            <div class="column has-text-centered">
+                <div class="publication-links"> 
+                <span class="link-block">
+                    <a href=""
+                    class="external-link button is-normal is-rounded is-pink">
+                    <span class="icon">
+                        <i class="fab fa-github"></i>
+                    </span>
+                    <span>Source Code (TBA) </span>
+                    </a>
+                </span>
+                </div>
+            </div>
+            </div>
+        </div>
+        </div>
+    </div>
+    </section> 
+ 
+<div style="height: 40px;"></div>
+ 
+<section class="section" style="padding-top: 0px;">
+    <div class="container is-max-desktop"> 
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3">Abstract</h2>
+          <div class="content has-text-justified">
+            <p> Previously, diffusion models have shown their powerful generative capability, and conditional flow matching (CFM) has accelerated the inference speed with the optimal path. 
+                Despite these advantages, the ability of streaming generation has not been investigated well because CFM still requires many sampling steps during generation. 
+                In this paper, we introduce a novel real-time streaming generative model, StreamFlow. For a real-time generation, we leverage the casual noising training framework on the time axis. 
+                Then, the model estimates multi-time vector fields at once on each stream flow, resulting in giving the ability to streaming generation. 
+                Furthermore, we propose a new diffusion transformer architecture, Scale-DiT for better generalization via modeling the difference between features, normalizing the difference, 
+                and scaling it before skip connection. This significantly improves the robustness and performance of DiT without increasing the parameter size. 
+                We verified the effectiveness and streaming feasibility of StreamFlow via neural audio codec reconstruction tasks including EnCodec and Mimi. 
+                Furthermore, we successfully incorporated our model into fully-duplex streaming speech language models of Moshi by replacing the Mimi decoder.
+            </p>
+          </div> 
+        </div>
+      </div>  
+    </div>
+</section> 
+
+<section class="hero is-light is-small">
+    <div class="hero-body">
+      <div class="container">
+        <div class="container is-max-desktop">
+          <div class="columns is-centered has-text-centered">
+            <div class="column is-full-width">
+              <h2 class="title is-3">Encodec Streaming Reconstruction</h2>
+              <div class="content"></div>
+            </div>
+          </div>
+          <div class="columns is-centered has-text-centered">
+            <table class="table" style="background-color: transparent;">
+              <thead>
+                <tr> 
+                  <th align="center"><strong>GT</strong></th>  
+                  <th align="center"><strong>Encodec</strong></th>
+                  <th align="center"><strong>Vocos</strong></th> 
+                  <th align="center" style="color: hsl(204, 92%, 37%);"><strong>StreamFlow-Base</strong></th>
+                  <th align="center" style="color: hsl(204, 92%, 37%);"><strong>StreamFlow-Small</strong></th>
+                  <th align="center" style="color: hsl(204, 92%, 37%);"><strong>StreamFlow-Tiny</strong></th> 
+                </tr>
+              </thead>
+              <tbody id="audioTable">  
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const audioTable = document.getElementById("audioTable");
+  
+      const models = ["gt", "s_encodec", "s_vocos", "s_sf_base", "s_sf_small", "s_sf_tiny"]; 
+      const fileNames = [
+        "11697_other_14407_bessiesfortune_05_holmes_0151.wav",
+        "11697_other_15885_strangeworld_13_braddon_0116.wav",
+        "12787_other_13887_dayoffate_03_roe_0304.wav",
+        "12787_other_14124_search_18_hill_0287.wav",
+        "8051_other_9685_annualreportseducation_16_mann_0699.wav",
+        "9017_clean_13130_dartagnan01_22_dumas_0124.wav",
+        "9017_clean_15482_zarathustra_58_nietzsche_0162.wav",
+        "LibriTTS_test-clean_2300_131720_2300_131720_000013_000002.wav",
+        "LibriTTS_test-clean_3570_5695_3570_5695_000001_000005.wav",
+        "LibriTTS_test-clean_4446_2273_4446_2273_000008_000003.wav",
+        "LibriTTS_test-clean_4446_2275_4446_2275_000031_000002.wav",
+        "LibriTTS_test-clean_7021_79740_7021_79740_000010_000003.wav",
+        "LibriTTS_test-clean_7021_85628_7021_85628_000006_000000.wav", 
+        "ex01_default_00372.wav",
+        "ex01_default_emphasis_00197.wav",
+        "ex01_default_essentials_00040.wav",
+        "ex02_confused_00371.wav",
+        "ex02_confused_00374.wav",
+        "ex02_default_00364.wav",
+        "ex02_enunciated_00377.wav",
+        "ex02_sad_00364.wav",
+        "ex02_sad_00379.wav",
+        "ex04_confused_00374.wav",
+        "ex04_confused_00375.wav",
+        "ex04_default_00375.wav",
+        "ex04_default_essentials_00040.wav",
+        "ex04_enunciated_00374.wav"
+      ];
+      fileNames.forEach(fileName => {
+        const row = document.createElement("tr");
+  
+        models.forEach(model => {
+          const filePath = `sample/st_enc/${model}/${fileName}`;
+          const td = document.createElement("td");
+          td.width = "10%";
+          td.style.textAlign = "center";
+          td.innerHTML = `
+            <audio controls controlslist="nodownload">
+              <source src="${filePath}" type="audio/wav">
+              Your browser does not support the audio tag.
+            </audio>
+          `;
+          row.appendChild(td);  
+        });
+  
+        audioTable.appendChild(row); 
+      });
+    });
+  </script> 
+
+<section id="s2" class="hero is-light is-small audio-w" style="background-color: white;"> 
+    <div class="hero-body">
+      <div class="container">
+        <div class="container is-max-desktop">
+          <div class="columns is-centered has-text-centered">
+            <div class="column is-full-width">
+              <h2 class="title is-3">Encodec Parallel Reconstruction</h2>
+              <div class="content"></div>
+            </div>
+          </div>
+          <div class="columns is-centered has-text-centered">
+            <table class="table" style="background-color: transparent;">
+              <thead>
+                <tr> 
+                  <th align="center"><strong>GT</strong></th>  
+                  <th align="center"><strong>vocos</strong></th>  
+                  <th align="center"><strong>MBD<br>(10 steps)</strong></th>
+                  <th align="center"><strong>RFWave<br>(CFG2)</strong></th> 
+                  <th align="center" style="color: hsl(204, 92%, 37%);"><strong>StreamFlow<br>(4 steps)</strong></th> 
+                </tr>
+              </thead>
+              <tbody id="audioTable2">  
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const audioTable2 = document.getElementById("audioTable2");
+  
+      const models = ["gt", "p_vocos", "p_mbd", "p_rfwave", "p_sf"]; 
+      const fileNames = [
+        "11697_other_14407_bessiesfortune_05_holmes_0151.wav",
+        "11697_other_15885_strangeworld_13_braddon_0116.wav",
+        "12787_other_13887_dayoffate_03_roe_0304.wav",
+        "12787_other_14124_search_18_hill_0287.wav",
+        "8051_other_9685_annualreportseducation_16_mann_0699.wav",
+        "9017_clean_13130_dartagnan01_22_dumas_0124.wav",
+        "9017_clean_15482_zarathustra_58_nietzsche_0162.wav",
+        "LibriTTS_test-clean_2300_131720_2300_131720_000013_000002.wav",
+        "LibriTTS_test-clean_3570_5695_3570_5695_000001_000005.wav",
+        "LibriTTS_test-clean_4446_2273_4446_2273_000008_000003.wav",
+        "LibriTTS_test-clean_4446_2275_4446_2275_000031_000002.wav",
+        "LibriTTS_test-clean_7021_79740_7021_79740_000010_000003.wav",
+        "LibriTTS_test-clean_7021_85628_7021_85628_000006_000000.wav", 
+        "ex01_default_00372.wav",
+        "ex01_default_emphasis_00197.wav",
+        "ex01_default_essentials_00040.wav",
+        "ex02_confused_00371.wav",
+        "ex02_confused_00374.wav",
+        "ex02_default_00364.wav",
+        "ex02_enunciated_00377.wav",
+        "ex02_sad_00364.wav",
+        "ex02_sad_00379.wav",
+        "ex04_confused_00374.wav",
+        "ex04_confused_00375.wav",
+        "ex04_default_00375.wav",
+        "ex04_default_essentials_00040.wav",
+        "ex04_enunciated_00374.wav"
+      ];
+      fileNames.forEach(fileName => {
+        const row = document.createElement("tr");
+  
+        models.forEach(model => {
+          const filePath = `sample/pa_enc/${model}/${fileName}`;
+          const td = document.createElement("td");
+          td.width = "10%";
+          td.style.textAlign = "center";
+          td.innerHTML = `
+            <audio controls controlslist="nodownload">
+              <source src="${filePath}" type="audio/wav">
+              Your browser does not support the audio tag.
+            </audio>
+          `;
+          row.appendChild(td);  
+        });
+  
+        audioTable2.appendChild(row); 
+      });
+    });
+  </script> 
+ 
+ <section class="hero is-light is-small">
+    <div class="hero-body">
+      <div class="container">
+        <div class="container is-max-desktop">
+          <div class="columns is-centered has-text-centered">
+            <div class="column is-full-width">
+              <h2 class="title is-3">Mimi Streaming Reconstruction</h2>
+              <div class="content"></div>
+            </div>
+          </div>
+          <div class="columns is-centered has-text-centered">
+            <table class="table" style="background-color: transparent;">
+              <thead>
+                <tr> 
+                  <th align="center"><strong>GT</strong></th>   
+                  <th align="center"><strong>Mimi</strong></th> 
+                  <th align="center" style="color: hsl(204, 92%, 37%);"><strong>StreamFlow</strong></th> 
+                </tr>
+              </thead>
+              <tbody id="audioTable3">  
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const audioTable3 = document.getElementById("audioTable3");
+  
+      const models = ["gt", "mimi", "sf"]; 
+      const fileNames = [
+        "11614_other_14179_catholicmorals_33_stapleton_0033.wav",
+        "11697_other_13093_widowbarnaby_09_trollope_0260.wav",
+        "11697_other_14407_bessiesfortune_05_holmes_0151.wav", 
+        "12787_other_13887_dayoffate_02_roe_0085.wav", 
+        "12787_other_13887_dayoffate_13_roe_0091.wav",
+        "12787_other_14124_search_10_hill_0294.wav",
+        "12787_other_14124_search_11_hill_0177.wav", 
+        "6097_clean_14843_bambatse_12_haggard_0261.wav",
+        "6670_other_12576_goldengemsoflife_001_allen_0122.wav",
+        "6670_other_8322_internationalshortstories1_08_patten_0282.wav",
+        "6671_other_5479_monsieurlecoq_2_17_gaboriau_0034.wav", 
+        "8051_other_9685_annualreportseducation_16_mann_0699.wav", 
+        "9017_clean_13130_dartagnan01_22_dumas_0124.wav",
+        "9017_clean_15482_zarathustra_58_nietzsche_0162.wav",
+        "9136_other_10673_secondsight_19_leverson_0040.wav",
+        "9136_other_11325_vanityfair_07_thackeray_0341.wav", 
+        "92_clean_9288_scarletletter_21_hawthorne_0041.wav",
+        "LibriTTS_test-clean_1580_141083_1580_141083_000070_000000.wav",
+        "LibriTTS_test-clean_2300_131720_2300_131720_000013_000002.wav",
+        "LibriTTS_test-clean_3570_5694_3570_5694_000007_000009.wav",
+        "LibriTTS_test-clean_3570_5694_3570_5694_000010_000002.wav",
+        "LibriTTS_test-clean_3570_5695_3570_5695_000001_000005.wav",
+        "LibriTTS_test-clean_3570_5695_3570_5695_000004_000008.wav", 
+        "ex01-ex02_default_008_0ms_to_60000ms_part40.wav",
+        "ex01_confused_00371.wav",
+        "ex01_default_00372.wav", 
+        "ex01_happy_00358.wav", 
+        "ex02_confused_00371.wav", 
+      ];
+      fileNames.forEach(fileName => {
+        const row = document.createElement("tr");
+  
+        models.forEach(model => {
+          const filePath = `sample/st_mimi/${model}/${fileName}`;
+          const td = document.createElement("td");
+          td.width = "10%";
+          td.style.textAlign = "center";
+          td.innerHTML = `
+            <audio controls controlslist="nodownload">
+              <source src="${filePath}" type="audio/wav">
+              Your browser does not support the audio tag.
+            </audio>
+          `;
+          row.appendChild(td);  
+        });
+  
+        audioTable3.appendChild(row); 
+      });
+    });
+  </script> 
+
+
+<footer class="footer">
+  <div class="container">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Licenses</h2>
+        <div class="content">
+          <p>
+            This website is licensed under a <a rel="license"
+                                                href="http://creativecommons.org/licenses/by-sa/4.0/">Creative
+            Commons Attribution-ShareAlike 4.0 International License</a>.
+          </p>
+          <p>
+            Website source code based on the <a
+            href="https://github.com/nerfies/nerfies.github.io">Nerfies</a> project page.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
+
+
+<button onclick="scrollToTop()" id="topBtn" style="position: fixed; bottom: 20px; right: 30px; display: none; background-color: #a0d8ef; color: white; border: none; width: 50px; height: 25px; border-radius: 30%; cursor: pointer; font-size: 16px;">
+    ↑
+  </button>
+  
+  <script> 
+    window.onscroll = function() {scrollFunction()};
+  
+    function scrollFunction() {
+      var topBtn = document.getElementById("topBtn");
+      if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+        topBtn.style.display = "block";
+      } else {
+        topBtn.style.display = "none";
+      }
+    }
+   
+    function scrollToTop() {
+      document.body.scrollTop = 0;            // Safari
+      document.documentElement.scrollTop = 0; // Chrome,IE
+    }
+  </script>
+  
+<script type="text/javascript">
+    document.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+    });
+</script> 
+
+<style>  
+    .audio-w audio::-webkit-media-controls-panel {
+      background-color: white !important;
+    }  
+ 
+    .is-pink {
+    background-color: #f13291 !important;  
+    border-color: #f13291 !important;  
+    color: white !important; 
+    }
+
+    .is-pink:hover {
+    background-color: #ff1493 !important;  
+    border-color: #ff1493 !important;
+    }
+
+ 
+    .hero .container {
+    max-width: 100%;
+    width: 100%;
+    }
+
+    .hero table {
+    width: 100%;
+    table-layout: fixed;
+    } 
+    .hero audio {
+    width: 100%;
+    height: 40px;
+    }
+
+</style>
